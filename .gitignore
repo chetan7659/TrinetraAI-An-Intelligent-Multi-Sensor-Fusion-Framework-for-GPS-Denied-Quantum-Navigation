@@ -36,17 +36,33 @@ logs/*.log
 Thumbs.db
 
 # ─── Data & Models (large files) ────────────────────
-datasets/raw/*
+datasets/raw/ronin/*
+datasets/raw/tlio/*
+datasets/raw/oxiod/*
+datasets/raw/euroc/*
+datasets/raw/kitti/*
+datasets/raw/comma2k19/*
+datasets/raw/magnav/*
 datasets/processed/*
-datasets/external/*
+datasets/canonical/*
+datasets/metadata/*
+datasets/cache/*
 models/*.pt
 models/*.pth
 models/*.onnx
 models/*.h5
 models/*.pkl
-!datasets/raw/.gitkeep
+!datasets/raw/ronin/.gitkeep
+!datasets/raw/tlio/.gitkeep
+!datasets/raw/oxiod/.gitkeep
+!datasets/raw/euroc/.gitkeep
+!datasets/raw/kitti/.gitkeep
+!datasets/raw/comma2k19/.gitkeep
+!datasets/raw/magnav/.gitkeep
 !datasets/processed/.gitkeep
-!datasets/external/.gitkeep
+!datasets/canonical/.gitkeep
+!datasets/metadata/.gitkeep
+!datasets/cache/.gitkeep
 
 # ─── Results & Logs ─────────────────────────────────
 results/*
