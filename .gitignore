@@ -1,0 +1,58 @@
+# ─── Python ──────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+*.egg
+dist/
+build/
+*.whl
+
+# ─── Virtual Environments ───────────────────────────
+.venv/
+venv/
+env/
+
+# ─── IDEs & Editors ─────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# ─── Jupyter Notebooks ──────────────────────────────
+.ipynb_checkpoints/
+
+# ─── OS Files ────────────────────────────────────────
+.DS_Store
+Thumbs.db
+
+# ─── Data & Models (large files) ────────────────────
+datasets/raw/*
+datasets/processed/*
+datasets/external/*
+models/*.pt
+models/*.pth
+models/*.onnx
+models/*.h5
+models/*.pkl
+!datasets/raw/.gitkeep
+!datasets/processed/.gitkeep
+!datasets/external/.gitkeep
+
+# ─── Results & Logs ─────────────────────────────────
+results/*
+!results/.gitkeep
+*.log
+
+# ─── Environment / Secrets ──────────────────────────
+.env
+.env.*
+
+# ─── Docker ──────────────────────────────────────────
+docker/tmp/
+
+# ─── Coverage & Testing ─────────────────────────────
+.coverage
+htmlcov/
+.pytest_cache/

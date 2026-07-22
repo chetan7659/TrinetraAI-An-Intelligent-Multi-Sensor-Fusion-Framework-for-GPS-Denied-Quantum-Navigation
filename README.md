@@ -1,0 +1,186 @@
+# Trinetra-AI
+
+**An Intelligent Multi-Sensor Fusion Framework for GPS-Denied Quantum Navigation**
+
+> M.Tech Research Project — Milestone M0: Environment & Project Setup
+
+---
+
+## Overview
+
+Trinetra-AI is a research framework for intelligent navigation in GPS-denied environments. It combines multi-sensor fusion techniques with AI-driven state estimation to achieve robust positioning using quantum-enhanced inertial sensors, vision, LiDAR, and other complementary modalities.
+
+---
+
+## Project Structure
+
+```
+Trinetra-AI/
+│
+├── src/
+│   └── trinetra_core/           # Core Python package
+│       ├── acquisition/         # Sensor data acquisition interfaces
+│       ├── preprocessing/       # Signal conditioning & cleaning
+│       ├── features/            # Feature extraction & engineering
+│       ├── sensor_fusion/       # Multi-sensor fusion algorithms
+│       ├── navigation/          # State estimation & trajectory
+│       ├── ai_modules/          # Deep learning / AI models
+│       ├── evaluation/          # Metrics & benchmarking
+│       └── utils/               # Shared utilities
+│
+├── tests/                       # Unit & integration tests
+├── configs/                     # YAML / JSON configuration files
+├── datasets/
+│   ├── raw/                     # Unmodified sensor recordings
+│   ├── processed/               # Cleaned / transformed data
+│   └── external/                # Third-party benchmark datasets
+│
+├── models/                      # Trained model checkpoints
+├── scripts/                     # CLI utilities & setup scripts
+├── notebooks/                   # Jupyter exploration notebooks
+├── docs/                        # Documentation & architecture notes
+├── docker/                      # Dockerfiles & compose configs
+├── research/                    # Papers, literature notes, references
+├── results/                     # Experiment outputs & logs
+│
+├── main.py                      # Entry point
+├── pyproject.toml               # PEP 621 project metadata
+├── requirements.txt             # Pip dependencies
+├── LICENSE                      # MIT License
+├── .gitignore                   # Git ignore rules
+└── README.md                    # This file
+```
+
+---
+
+## Getting Started
+
+### Prerequisites
+
+| Tool   | Version  | Check command        |
+|--------|----------|----------------------|
+| Python | ≥ 3.11   | `python --version`   |
+| pip    | latest   | `pip --version`      |
+| git    | any      | `git --version`      |
+
+### Installation
+
+#### Option A — Automated Setup (Recommended)
+
+**Windows (PowerShell):**
+```powershell
+.\scripts\setup_environment.ps1
+```
+
+**Linux / macOS:**
+```bash
+chmod +x scripts/setup_environment.sh
+source scripts/setup_environment.sh
+```
+
+#### Option B — Manual Setup
+
+**1. Create a virtual environment**
+
+```bash
+# Windows
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+
+# Linux / macOS
+python3 -m venv .venv
+source .venv/bin/activate
+```
+
+**2. Upgrade pip**
+
+```bash
+pip install --upgrade pip
+```
+
+**3. Install dependencies**
+
+```bash
+# Core dependencies
+pip install -r requirements.txt
+
+# Development tools (optional)
+pip install -e ".[dev]"
+```
+
+### Verify Installation
+
+```bash
+python scripts/check_environment.py
+```
+
+Expected output:
+
+```
+============================================================
+  Trinetra-AI — Environment Check
+============================================================
+  [✓] Python version       Python 3.11 (requires >=3.11)
+  [✓] NumPy                numpy 1.26.x
+  [✓] Pandas               pandas 2.1.x
+  [✓] SciPy                scipy 1.11.x
+  [✓] Matplotlib           matplotlib 3.8.x
+------------------------------------------------------------
+  ✅ All checks passed. Environment is ready.
+============================================================
+```
+
+### Run the Application
+
+```bash
+python main.py
+# → Trinetra-AI initialized successfully.
+```
+
+---
+
+## Development Status
+
+| Milestone | Description                  | Status      |
+|-----------|------------------------------|-------------|
+| **M0**    | Environment & Project Setup  | 🔧 Active  |
+| M1        | Data Acquisition Pipeline    | 🔲 Planned  |
+| M2        | Preprocessing & Features     | 🔲 Planned  |
+| M3        | Sensor Fusion Engine         | 🔲 Planned  |
+| M4        | AI Module Integration        | 🔲 Planned  |
+| M5        | Evaluation & Benchmarks      | 🔲 Planned  |
+
+---
+
+## Why Virtual Environments?
+
+Virtual environments are **essential** for research software:
+
+- **Isolation** — Each project gets its own dependency tree. Installing SciPy 1.11 for Trinetra-AI won't break another project that requires SciPy 1.9.
+- **Reproducibility** — A collaborator (or your future self) can recreate the exact same environment from `requirements.txt`, ensuring experiments produce identical results.
+- **Clean system** — Your system Python stays untouched. No risk of corrupting OS-level packages.
+
+## Why Dependency Pinning?
+
+Pinning versions (e.g., `numpy>=1.26.0`) prevents silent breakage:
+
+- **Deterministic builds** — `pip install -r requirements.txt` produces the same environment today and six months from now.
+- **Debugging confidence** — When a regression appears, you know it's in *your* code, not a transitive dependency upgrade.
+- **Publication integrity** — Research results must be tied to a specific software stack. Reviewers and readers should be able to reproduce your experiments exactly.
+
+## Why Reproducibility Matters in Research Software
+
+Scientific software has a higher bar than typical application code:
+
+- **Peer review** — Reviewers must be able to run your code and replicate your results.
+- **Long-term archival** — Your M.Tech thesis results should be reproducible years after submission.
+- **Collaboration** — Team members across different operating systems (Windows, Linux, macOS) must get identical behaviour.
+- **Credibility** — Irreproducible results undermine the scientific contribution, regardless of how novel the algorithm is.
+
+This project uses virtual environments, pinned dependencies, and cross-platform setup scripts to ensure full reproducibility from day one.
+
+---
+
+## License
+
+This project is licensed under the **MIT License** — see [LICENSE](LICENSE) for details.
