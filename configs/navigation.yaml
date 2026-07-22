@@ -1,0 +1,9 @@
+# Trinetra-AI: Navigation Configuration
+# Parameters for sensor fusion and state estimation
+
+imu_frequency: 200     # Hz
+gps_frequency: 10      # Hz
+camera_frequency: 30   # Hz
+fusion_rate: 100       # Hz
+
+coordinate_frame: "ENU" # East-North-Up

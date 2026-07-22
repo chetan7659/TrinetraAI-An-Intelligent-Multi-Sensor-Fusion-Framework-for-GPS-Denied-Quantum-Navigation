@@ -1,0 +1,7 @@
+# Trinetra-AI: Model Configuration
+# Placeholders for AI model parameters (to be implemented in future milestones)
+
+batch_size: 32
+epochs: 100
+learning_rate: 0.001
+checkpoint_directory: "models/checkpoints/"

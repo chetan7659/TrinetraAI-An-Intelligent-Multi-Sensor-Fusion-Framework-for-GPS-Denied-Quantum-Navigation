@@ -1,0 +1,9 @@
+# Trinetra-AI: Default Configuration
+project_name: "Trinetra-AI"
+project_version: "0.1.0"
+random_seed: 42
+device: "cpu"
+
+data_root: "datasets/"
+results_root: "results/"
+models_root: "models/"

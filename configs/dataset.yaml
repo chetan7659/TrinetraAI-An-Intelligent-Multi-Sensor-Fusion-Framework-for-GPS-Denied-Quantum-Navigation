@@ -1,0 +1,10 @@
+# Trinetra-AI: Dataset Configuration
+dataset_name: "trinetra_benchmark_v1"
+raw_data_path: "datasets/raw/"
+processed_data_path: "datasets/processed/"
+
+sampling_rate: 100  # Hz
+
+train_split: 0.7
+validation_split: 0.15
+test_split: 0.15

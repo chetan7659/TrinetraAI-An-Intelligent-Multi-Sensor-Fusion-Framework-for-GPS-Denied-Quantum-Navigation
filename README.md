@@ -242,6 +242,34 @@ Recommended VS Code extensions:
 
 ---
 
+## Configuration Management
+
+Trinetra-AI uses a centralized configuration system powered by YAML files located in the `configs/` directory.
+
+### Why Centralized Configuration?
+
+- **Single Source of Truth** — No magic numbers hidden in source code. All hyperparameters and paths are centralized.
+- **Reproducibility** — Research experiments can be fully reproduced by saving the configuration state.
+- **Modularity** — Configurations are logically separated by domain (e.g., `dataset.yaml`, `model.yaml`, `navigation.yaml`).
+
+### Why YAML?
+
+YAML was chosen because it is human-readable, supports comments, and clearly represents nested hierarchical data better than JSON or INI.
+
+### Usage
+
+Future modules will consume configuration via the clean helper functions in `src/trinetra_core/utils/config.py`:
+
+```python
+from trinetra_core.utils.config import get_config
+
+# Load dataset configuration
+dataset_cfg = get_config("dataset")
+print(dataset_cfg["sampling_rate"])
+```
+
+---
+
 ## Why Virtual Environments?
 
 Virtual environments are **essential** for research software:
