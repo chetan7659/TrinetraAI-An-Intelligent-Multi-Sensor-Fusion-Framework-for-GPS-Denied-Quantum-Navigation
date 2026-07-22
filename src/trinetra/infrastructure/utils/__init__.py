@@ -1,0 +1,1 @@
+"""Infrastructure utility functions placeholder."""

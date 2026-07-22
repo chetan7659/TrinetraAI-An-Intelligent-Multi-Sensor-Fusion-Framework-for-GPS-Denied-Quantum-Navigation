@@ -50,7 +50,7 @@ dev = [
 Repository = "https://github.com/chetan7659/TrinetraAI-An-Intelligent-Multi-Sensor-Fusion-Framework-for-GPS-Denied-Quantum-Navigation"
 
 [project.scripts]
-trinetra = "trinetra_core.__main__:main"
+trinetra = "trinetra.__main__:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
@@ -83,7 +83,7 @@ ignore = [
 ]
 
 [tool.ruff.lint.isort]
-known-first-party = ["trinetra_core"]
+known-first-party = ["trinetra"]
 
 # ── Pytest ───────────────────────────────────────────
 [tool.pytest.ini_options]
@@ -101,7 +101,7 @@ markers = [
 
 # ── Coverage ─────────────────────────────────────────
 [tool.coverage.run]
-source = ["src/trinetra_core"]
+source = ["src/trinetra"]
 branch = true
 
 [tool.coverage.report]

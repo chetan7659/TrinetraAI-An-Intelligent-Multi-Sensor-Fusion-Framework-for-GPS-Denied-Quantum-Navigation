@@ -2,7 +2,7 @@
 
 import pytest
 
-from trinetra_core.utils.exceptions import (
+from trinetra.shared.exceptions import (
     ConfigurationError,
     DatasetError,
     EvaluationError,

@@ -2,7 +2,8 @@
 
 import logging
 
-from trinetra_core.utils.logger import _PROJECT_ROOT, setup_logger
+from trinetra.infrastructure.logging import setup_logger
+from trinetra.infrastructure.logging.logger import _PROJECT_ROOT
 
 
 def test_logger_creation():

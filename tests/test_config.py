@@ -2,7 +2,7 @@
 
 import pytest
 
-from trinetra_core.utils.config import get_config, load_config
+from trinetra.infrastructure.config import get_config, load_config
 
 
 def test_load_existing_config():
