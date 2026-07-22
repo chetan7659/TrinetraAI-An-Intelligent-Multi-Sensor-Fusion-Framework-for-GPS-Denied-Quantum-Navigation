@@ -268,6 +268,44 @@ dataset_cfg = get_config("dataset")
 print(dataset_cfg["sampling_rate"])
 ```
 
+## Logging & Error Handling
+
+Trinetra-AI uses a centralized logging and exception system to ensure consistent monitoring and debugging across all research experiments.
+
+### Logging
+
+The logger is built on Python's standard `logging` library. By centralizing it, we guarantee:
+- Consistent log formatting (Timestamp, Level, Module, Message)
+- Simultaneous console output and file persistence
+- Dynamic log level control via `configs/logging.yaml`
+
+Log files are automatically saved to the `logs/` directory. They are generated daily (e.g., `trinetra_2026-07-23.log`).
+
+#### Usage
+
+Every future module should instantiate its logger like this:
+
+```python
+from trinetra_core.utils.logger import setup_logger
+from trinetra_core.utils.exceptions import DatasetError
+
+# Initialize logger for the current module
+logger = setup_logger(__name__)
+
+logger.info("Dataset preprocessing started.")
+
+try:
+    # Some logic
+    raise DatasetError("Dataset directory not found.")
+except DatasetError as e:
+    logger.error(f"Failed to load dataset: {e}")
+```
+
+### Exception Hierarchy
+
+Custom exceptions provide granular error tracking without leaking implementation details. All exceptions inherit from `TrinetraError`.
+Available exceptions include: `ConfigurationError`, `DatasetError`, `PreprocessingError`, `SensorFusionError`, `NavigationError`, `ModelError`, and `EvaluationError`.
+
 ---
 
 ## Why Virtual Environments?

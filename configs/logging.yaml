@@ -1,6 +1,6 @@
 # Trinetra-AI: Logging Configuration
 
 log_level: "INFO"
-log_directory: "results/logs/"
+log_directory: "logs/"
 save_logs: true
 console_logging: true
