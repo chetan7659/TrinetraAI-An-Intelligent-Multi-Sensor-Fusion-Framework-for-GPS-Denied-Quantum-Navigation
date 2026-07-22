@@ -8,8 +8,8 @@ or code 1 if any check fails.
 
 from __future__ import annotations
 
-import sys
 import io
+import sys
 
 
 def _check_python_version(minimum: tuple[int, int] = (3, 11)) -> tuple[bool, str]:
@@ -43,9 +43,7 @@ def main() -> int:
 
     # Ensure UTF-8 output on Windows consoles.
     if sys.platform == "win32":
-        sys.stdout = io.TextIOWrapper(
-            sys.stdout.buffer, encoding="utf-8", errors="replace"
-        )
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
 
     width = 60
     print("=" * width)

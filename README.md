@@ -152,6 +152,96 @@ python main.py
 
 ---
 
+## Development Workflow
+
+### Install Development Dependencies
+
+```bash
+# Activate your virtual environment first, then:
+pip install -r requirements.txt
+
+# Or install as editable with all dev tools:
+pip install -e ".[dev]"
+```
+
+### Code Formatting — Black
+
+[Black](https://black.readthedocs.io/) is an opinionated code formatter that enforces a consistent style across the entire codebase. It eliminates style debates in code reviews.
+
+```bash
+# Format all source files
+black src/ tests/ main.py
+
+# Check without modifying (dry run)
+black --check src/ tests/ main.py
+
+# Show what would change
+black --diff src/ tests/ main.py
+```
+
+### Linting — Ruff
+
+[Ruff](https://docs.astral.sh/ruff/) is an extremely fast Python linter that catches bugs, enforces best practices, and auto-sorts imports. It replaces flake8, isort, and several other tools in a single binary.
+
+```bash
+# Lint all source files
+ruff check src/ tests/ main.py
+
+# Lint and auto-fix issues
+ruff check --fix src/ tests/ main.py
+```
+
+### Testing — Pytest
+
+[Pytest](https://docs.pytest.org/) discovers and runs tests with minimal boilerplate. It integrates with coverage reporting to measure how much of the code is exercised by tests.
+
+```bash
+# Run all tests
+pytest
+
+# Run with coverage report
+pytest --cov=src/trinetra_core --cov-report=term-missing
+
+# Run a specific test file
+pytest tests/test_project.py -v
+```
+
+### Pre-commit Hooks
+
+[Pre-commit](https://pre-commit.com/) runs formatting and linting checks automatically before every `git commit`. This ensures no unformatted or broken code enters the repository.
+
+```bash
+# Install hooks (one-time setup)
+pre-commit install
+
+# Run all hooks on every file (manual)
+pre-commit run --all-files
+
+# Update hook versions
+pre-commit autoupdate
+```
+
+### EditorConfig
+
+The `.editorconfig` file ensures consistent editor settings (UTF-8, LF line endings, 4-space indentation) across VS Code, JetBrains, Vim, and other editors that support the [EditorConfig](https://editorconfig.org/) standard. No manual configuration needed.
+
+### VS Code Integration
+
+The `.vscode/settings.json` file pre-configures:
+
+- **Black** as the default Python formatter with format-on-save
+- **Ruff** for real-time linting with auto-fix
+- **Pytest** for test discovery and the testing sidebar
+- **100-character ruler** matching the project line-length standard
+
+Recommended VS Code extensions:
+
+- `ms-python.python`
+- `ms-python.black-formatter`
+- `charliermarsh.ruff`
+
+---
+
 ## Why Virtual Environments?
 
 Virtual environments are **essential** for research software:
