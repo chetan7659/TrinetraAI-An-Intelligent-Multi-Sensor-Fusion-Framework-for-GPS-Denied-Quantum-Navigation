@@ -303,6 +303,33 @@ for record in loader.iter_split("train"):
     train(record)
 ```
 
+## Analysis Layer
+
+```
+src/trinetra/analysis/
+├── __init__.py
+├── dataset_statistics.py
+├── main.py
+├── recording_statistics.py
+├── report_export.py
+├── sensor_statistics.py
+├── summary.py
+└── timestamp_statistics.py
+```
+
+### Purpose
+
+The Analysis layer performs Exploratory Data Analysis (EDA) on the dataset. It is intentionally separated from the Application layer. It consumes canonical `SensorRecord` streams without modifying them, ensuring that the analytics code is completely decoupled from infrastructure parsing.
+
+**Key Design Principles**:
+1. **Dataset Agnostic**: It operates strictly on `SensorRecord` objects. Output directories for specific datasets (e.g. RoNIN) are specified by the entry-point runner (`main.py`).
+2. **Single-Pass Streaming**: It orchestrates a single pass over the dataset stream, updating multiple incremental aggregators (`update(record)` / `finalize()`) simultaneously. This avoids memory bloat and redundant I/O.
+3. **Decoupled I/O**: The calculation of statistics (`summary.py` + aggregators) returns standard Pandas objects. The serialization to disk (`report_export.py`) is completely separated from the math.
+4. **Visualization**: The visualization module (`time_series.py`, `plot_utils.py`, `visualization.py`) consumes canonical `SensorRecord` streams and produces publication-ready PNG figures (10x8, 300 DPI). It buffers only one recording at a time to prevent out-of-memory errors and handles missing optional sensors gracefully. Plotting logic returns `matplotlib.figure.Figure` objects, keeping it isolated from file serialization.
+5. **Sensor Quality Assessment**: The quality assessment module (`quality_metrics.py`, `quality_assessment.py`, `quality_summary.py`) passively evaluates (without altering) canonical `SensorRecord` streams for anomalies (NaNs, Inf, outliers, timestamp integrity, sensor saturation). It operates iteratively over recordings in a single pass, computing normalized quality scores in `[0, 1]` and producing CSV and Markdown reports to inform subsequent preprocessing and filtering stages.
+6. **Coordinate & Orientation Validation**: The validation module (`coordinate_validation.py`, `orientation_validation.py`, `frame_validation.py`, `validation_summary.py`) evaluates the physical consistency, temporal orientation continuity, and cross-sensor coherence of canonical sensor streams. It checks gravity biases, quaternion unit norms, sign flips, relative angular steps, and cross-sensor residuals ($R = A - (G + L)$) in a streaming single-pass per recording, classifying each into PASS, REVIEW, or FAIL based on clear rule-based thresholds.
+
+
 ### RecordingIterator — M1.6.1
 
 **Location**: `src/trinetra/application/dataset/recording_iterator.py`
