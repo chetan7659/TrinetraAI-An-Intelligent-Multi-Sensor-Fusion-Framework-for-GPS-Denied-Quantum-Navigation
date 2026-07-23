@@ -346,3 +346,29 @@ for record in iterator.iter_recording(recording):
 **Extensibility**: When a second dataset (e.g., TLIO) is added, the caller
 simply injects `TlioMetadataLoader`, `TlioHDF5Reader`, and `TlioCanonicalMapper`.
 The `RecordingIterator` class itself requires **zero changes**.
+
+### Filters — M1.6.2
+
+**Location**: `src/trinetra/application/dataset/filters.py`
+
+**Responsibility**: Provide pure, lazy transformation utilities over streams of `SensorRecord` objects.
+
+These utilities are generic generator functions that consume an `Iterable[SensorRecord]` and yield an `Iterator[SensorRecord]`. They are entirely dataset-agnostic and hold no adapter dependencies, performing pure functional stream transformations.
+
+**Functions Provided**:
+- `filter_by_frame(records, start, end)`
+- `filter_by_time(records, start, end)`
+- `take(records, count)`
+- `skip(records, count)`
+- `predicate_filter(records, predicate)`
+
+**Example Chaining**:
+```python
+records = iterator.iter_recording(recording)
+records = filter_by_time(records, start=5.0, end=15.0)
+records = skip(records, 100)
+records = take(records, 500)
+
+for record in records:
+    ...
+```

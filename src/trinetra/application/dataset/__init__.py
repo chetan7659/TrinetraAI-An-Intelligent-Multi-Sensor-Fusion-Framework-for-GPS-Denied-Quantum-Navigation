@@ -9,3 +9,15 @@ ingestion pipeline components defined in:
 Services in this package coordinate collaborators — they do NOT perform
 parsing, decoding, mapping, preprocessing, or feature engineering.
 """
+
+from .filters import filter_by_frame, filter_by_time, predicate_filter, skip, take
+from .recording_iterator import RecordingIterator
+
+__all__ = [
+    "RecordingIterator",
+    "filter_by_frame",
+    "filter_by_time",
+    "predicate_filter",
+    "skip",
+    "take",
+]
