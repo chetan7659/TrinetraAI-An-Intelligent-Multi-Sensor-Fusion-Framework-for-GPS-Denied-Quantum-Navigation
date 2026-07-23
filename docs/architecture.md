@@ -270,7 +270,10 @@ See [ADR-0002](adr/0002-hdf5-reader-canonical-mapper-separation.md) for the full
 src/trinetra/application/
 └── dataset/
     ├── __init__.py
-    └── recording_iterator.py   ← M1.6.1
+    ├── filters.py              ← M1.6.2
+    ├── recording_iterator.py   ← M1.6.1
+    ├── samplers.py             ← M1.6.3
+    └── split_loader.py         ← M1.6.4
 ```
 
 ### Purpose
@@ -279,6 +282,26 @@ The Application layer **orchestrates** adapter and domain components.
 It holds no business logic and performs no parsing, decoding, or mapping itself.
 Its sole responsibility is to sequence collaborator calls and expose a clean,
 dataset-agnostic API to higher layers (e.g., training loops, EDA notebooks).
+
+### SplitLoader — M1.6.4
+
+**Location**: `src/trinetra/application/dataset/split_loader.py`
+
+**Responsibility**: Orchestrate dataset discovery and single-recording iteration to expose a continuous, lazy stream of `SensorRecord` objects across an entire dataset split.
+
+**Dependency Injection**:
+- `adapter`: Used to list recordings belonging to a requested split.
+- `recording_iterator`: Used to lazily load and map each recording in turn.
+
+While `RecordingIterator` orchestrates **one recording**, `SplitLoader` orchestrates **multiple recordings** within a dataset partition (e.g., "train", "seen", "unseen").
+
+**Example usage**:
+```python
+loader = SplitLoader(adapter, recording_iterator)
+
+for record in loader.iter_split("train"):
+    train(record)
+```
 
 ### RecordingIterator — M1.6.1
 
