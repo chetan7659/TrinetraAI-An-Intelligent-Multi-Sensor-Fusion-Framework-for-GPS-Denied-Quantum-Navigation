@@ -372,3 +372,30 @@ records = take(records, 500)
 for record in records:
     ...
 ```
+
+### Sampling & Batching — M1.6.3
+
+**Location**: `src/trinetra/application/dataset/samplers.py`
+
+**Responsibility**: Provide pure utilities for sampling and grouping streams of `SensorRecord` objects.
+
+These utilities prepare `SensorRecord` streams for downstream preprocessing and machine learning. They operate exclusively on canonical domain records and remain completely dataset-agnostic. All functions return lazy iterators to avoid materializing large lists.
+
+**Functions Provided**:
+- `batch(records, batch_size)`: Group records into lists of `batch_size`.
+- `window(records, size)`: Create a sliding window of exactly `size` records (yields tuples).
+- `stride(records, step)`: Yield every `step`-th record.
+- `chunk_by_time(records, duration)`: Group consecutive records whose timestamps fall within the same fixed-duration interval.
+
+**Example Usage**:
+```python
+records = iterator.iter_recording(recording)
+records = filter_by_time(records, start=5.0, end=25.0)
+
+for batch_records in batch(records, batch_size=256):
+    process(batch_records)
+
+records = iterator.iter_recording(recording)
+for window_records in window(records, size=200):
+    extract_features(window_records)
+```
