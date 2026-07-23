@@ -68,6 +68,7 @@ models/*.pkl
 results/*
 !results/.gitkeep
 *.log
+logs/
 
 # ─── Environment / Secrets ──────────────────────────
 .env
@@ -78,5 +79,14 @@ docker/tmp/
 
 # ─── Coverage & Testing ─────────────────────────────
 .coverage
+coverage.xml
 htmlcov/
 .pytest_cache/
+.mypy_cache/
+
+# ─── Tracking & Profiling ───────────────────────────
+wandb/
+mlruns/
+*.prof
+experiments/
+exports/

@@ -1,4 +1,13 @@
 # Trinetra-AI: Dataset Configuration
+default_dataset: "trinetra_benchmark_v1"
+available_datasets:
+  - "trinetra_benchmark_v1"
+  - "ronin_dataset"
+
+raw_root: "datasets/raw/"
+processed_root: "datasets/processed/"
+canonical_root: "datasets/canonical/"
+
 dataset_name: "trinetra_benchmark_v1"
 raw_data_path: "datasets/raw/"
 processed_data_path: "datasets/processed/"
@@ -8,3 +17,14 @@ sampling_rate: 100  # Hz
 train_split: 0.7
 validation_split: 0.15
 test_split: 0.15
+
+# ── RoNIN Dataset ──────────────────────────────────────
+ronin:
+  # Project-relative path to the raw RoNIN dataset root.
+  # All sub-paths are discovered automatically; do NOT hardcode splits here.
+  dataset_root: "datasets/raw/ronin"
+  # The subdirectory inside dataset_root that contains split folders.
+  data_subdir: "Data"
+  # Directories inside dataset_root that are NOT splits and should be ignored.
+  excluded_dirs:
+    - "Pretrained_Models"

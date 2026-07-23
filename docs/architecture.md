@@ -123,3 +123,104 @@ A core Kalman Filter solver in `domain/fusion` must **never** reference configur
 from trinetra.infrastructure.config import get_config  # LINT ERROR: Inward dependency break!
 ```
 Instead, configurations should be loaded at the Infrastructure/Application layer and passed down into the domain algorithms as primitives or simple parameters.
+
+---
+
+## Dataset Architecture (C1 Sensor Ingestion)
+
+The Dataset Ingestion component establishes a clear boundary between raw external data and the internal domain logic. The following section documents the architecture in its implemented state, using the RoNIN adapter as the reference implementation.
+
+### Why Adapters Exist
+Research datasets are delivered in wildly different formats (HDF5, ROS bags, CSVs, custom binary files) with inconsistent naming conventions, coordinate frames, and timestamp strategies. Interface adapters isolate this variance. Each adapter translates one specific dataset's filesystem layout into a standardized structure (e.g., `Recording`, `SensorRecord`) that the rest of the system understands. The Domain layer is never exposed to format-specific concerns.
+
+### How Datasets Plug Into the System
+Every concrete dataset adapter must:
+1. Inherit from `DatasetInterface` (`src/trinetra/domain/interfaces/dataset_interface.py`).
+2. Implement all eight abstract methods of that interface.
+3. Call `registry.register_dataset(name, AdapterClass)` at import time.
+
+The Application layer requests a dataset by name from the registry (`registry.get_dataset("ronin_dataset")`), receives the *class*, instantiates it, and calls its interface methods. No part of the Application or Domain layer needs to know which concrete adapter is in use.
+
+### RoNIN Adapter: Responsibilities
+
+**Module**: `src/trinetra/adapters/datasets/ronin/`
+
+| Component | Responsibility |
+|:---|:---|
+| `models.py` | Defines `Recording`, a frozen (immutable) dataclass representing one recording session. Pure data; no methods. |
+| `validator.py` | Encapsulates all filesystem checks. Returns structured `DatasetValidationReport` objects. Does NOT open any file. |
+| `adapter.py` | Implements `DatasetInterface`. Resolves paths from `configs/dataset.yaml`. Discovers splits and recordings dynamically from the filesystem. Delegates all validation to `RoninValidator`. |
+| `__init__.py` | Exports the public API of the subpackage. Triggers auto-registration in the global registry. |
+
+### Separation of Concerns: Three Independent Components
+
+The RoNIN dataset pipeline is deliberately split into three independent components. Each can be developed, tested, and replaced without affecting the others.
+
+| Concern | Component | Module | Status |
+|:---|:---|:---|:---:|
+| **Dataset Discovery** — find splits and recording dirs | `RoninAdapter` | `adapter.py` | ✅ Done (M1.2) |
+| **Metadata Parsing** — read and validate `info.json` | `RoninMetadataLoader` | `metadata_loader.py` | ✅ Done (M1.3) |
+| **Sensor Decoding** — read raw arrays from `data.hdf5` | HDF5 Reader | `hdf5_reader.py` | 🔜 M1.4 |
+| **Preprocessing** — calibration, resampling, windowing | Preprocessing Pipeline | `preprocessing/` | 🔜 M2 |
+
+### RoNIN Data Pipeline (M1.2 + M1.3)
+
+```
+datasets/raw/ronin/
+        │
+        ▼
+  RoninAdapter                 ← M1.2: filesystem discovery
+  (adapter.py)
+        │  returns
+        ▼
+  Recording                    ← immutable value object (models.py)
+  (recording_id, split,
+   recording_path,
+   hdf5_path, info_path)
+        │  consumed by
+        ▼
+  RoninMetadataLoader          ← M1.3: opens info.json only
+  (metadata_loader.py)
+        │  returns
+        ▼
+  RoninRecordingMetadata       ← immutable value object (metadata_models.py)
+  (device, length, date,
+   calibration, time_sync,
+   orientation, errors)
+        │
+        ▼
+  [HDF5 Reader — M1.4]         ← will open data.hdf5 only
+        │
+        ▼
+  SensorRecord stream          ← domain-level abstraction
+        │
+        ▼
+  Application layer → Domain
+```
+
+### Component Responsibility Boundaries
+
+**RoninAdapter** (`adapter.py`):
+- Discovers split directories by scanning the filesystem (no filenames hardcoded).
+- Discovers valid recordings (presence of `data.hdf5` + `info.json` only).
+- Returns `Recording` objects (paths only; no file content).
+- Does **not** open any file.
+
+**RoninMetadataLoader** (`metadata_loader.py`):
+- Accepts a `Recording` and opens **only** `recording.info_path`.
+- Parses and validates all required JSON fields against the real schema.
+- Raises `DatasetError` with precise context on any failure.
+- Returns an immutable `RoninRecordingMetadata` value object.
+- Does **not** open `data.hdf5`.
+
+**HDF5 Reader** (future, M1.4):
+- Will accept a `Recording` and open **only** `recording.hdf5_path`.
+- Will decode raw sensor arrays (gyro, acce, etc.) from the HDF5 groups.
+- Will yield `SensorRecord` objects consumed by the Application layer.
+- Does **not** re-parse `info.json` (uses `RoninRecordingMetadata` if calibration is needed).
+
+### Why the Domain Layer Never Imports Dataset-Specific Code
+
+The Domain layer (where Kalman filters, kinematics, and state models live) must remain completely ignorant of data sources. If the Domain layer imported an HDF5 parsing routine or referenced a RoNIN-specific field name, it would become tightly coupled to one dataset's format — a direct violation of the Dependency Rule.
+
+The Domain only ever receives abstract `SensorRecord` values, ensuring that swapping one dataset for another requires only a change of adapter — zero changes to core algorithms.
