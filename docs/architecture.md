@@ -152,75 +152,112 @@ The Application layer requests a dataset by name from the registry (`registry.ge
 | `adapter.py` | Implements `DatasetInterface`. Resolves paths from `configs/dataset.yaml`. Discovers splits and recordings dynamically from the filesystem. Delegates all validation to `RoninValidator`. |
 | `__init__.py` | Exports the public API of the subpackage. Triggers auto-registration in the global registry. |
 
-### Separation of Concerns: Three Independent Components
+### Separation of Concerns: Four Independent Components
 
-The RoNIN dataset pipeline is deliberately split into three independent components. Each can be developed, tested, and replaced without affecting the others.
+The RoNIN dataset pipeline is split into four strictly independent components. Each component has exactly one responsibility and zero knowledge of its neighbours' internals.
 
 | Concern | Component | Module | Status |
 |:---|:---|:---|:---:|
 | **Dataset Discovery** — find splits and recording dirs | `RoninAdapter` | `adapter.py` | ✅ Done (M1.2) |
 | **Metadata Parsing** — read and validate `info.json` | `RoninMetadataLoader` | `metadata_loader.py` | ✅ Done (M1.3) |
-| **Sensor Decoding** — read raw arrays from `data.hdf5` | HDF5 Reader | `hdf5_reader.py` | 🔜 M1.4 |
-| **Preprocessing** — calibration, resampling, windowing | Preprocessing Pipeline | `preprocessing/` | 🔜 M2 |
+| **Sensor Decoding** — read raw arrays from `data.hdf5`, return dataset-specific frame | `RoninHDF5Reader` | `hdf5_reader.py` | 🔜 M1.4 |
+| **Canonical Mapping** — convert dataset-specific frame to domain `SensorRecord` | `RoninCanonicalMapper` | `canonical_mapper.py` | 🔜 M1.5 |
+| **Dataset Utilities** — iteration helpers, split loaders, batching | Utilities | `utils.py` | 🔜 M1.6 |
+| **EDA** — visualisation, statistics, distribution analysis | Notebooks / scripts | `reports/eda/` | 🔜 M1.7 |
 
-### RoNIN Data Pipeline (M1.2 + M1.3)
+### RoNIN Data Pipeline (Target Architecture)
 
 ```
 datasets/raw/ronin/
         │
         ▼
-  RoninAdapter                 ← M1.2: filesystem discovery
-  (adapter.py)
+  RoninAdapter                 ← M1.2: filesystem discovery only
+  (adapter.py)                   Does NOT open any file.
         │  returns
         ▼
   Recording                    ← immutable value object (models.py)
   (recording_id, split,
    recording_path,
    hdf5_path, info_path)
-        │  consumed by
-        ▼
-  RoninMetadataLoader          ← M1.3: opens info.json only
-  (metadata_loader.py)
-        │  returns
-        ▼
-  RoninRecordingMetadata       ← immutable value object (metadata_models.py)
-  (device, length, date,
-   calibration, time_sync,
-   orientation, errors)
         │
-        ▼
-  [HDF5 Reader — M1.4]         ← will open data.hdf5 only
-        │
-        ▼
-  SensorRecord stream          ← domain-level abstraction
-        │
-        ▼
+        ├─────────────────────────────────────┐
+        ▼                                     ▼
+  RoninMetadataLoader          ← M1.3    RoninHDF5Reader           ← M1.4
+  (metadata_loader.py)                   (hdf5_reader.py)
+  Opens info.json only.                  Opens data.hdf5 only.
+        │  returns                             │  returns
+        ▼                                     ▼
+  RoninRecordingMetadata                 RoninRawFrame
+  (frozen dataclass)                     (dataset-specific, frozen)
+  device, length, date,                  timestamp, gyro, acce,
+  calibration, time_sync,                gravity, game_rv, linacce,
+  orientation, errors                    start_frame applied
+        │                                     │
+        │         consumed together by        │
+        └──────────────┬──────────────────────┘
+                       ▼
+  RoninCanonicalMapper             ← M1.5: domain boundary crossing
+  (canonical_mapper.py)
+  Converts RoninRawFrame → SensorRecord.
+  The ONLY component allowed to import both
+  adapter types (RoninRawFrame) and domain types (SensorRecord).
+                       │  returns
+                       ▼
+  SensorRecord                     ← domain abstraction (sensor_record.py)
+  (timestamp, sensor_type,           Completely ignorant of HDF5, RoNIN,
+   values, frame_id, metadata)       or any dataset format.
+                       │
+                       ▼
   Application layer → Domain
 ```
 
+### Why the HDF5 Reader Must Not Produce SensorRecord
+
+If `RoninHDF5Reader` directly yielded `SensorRecord` objects, it would be responsible for two distinct concerns:
+
+1. **File format decoding** — navigating HDF5 group structure, reading datasets, handling data types.
+2. **Domain mapping** — deciding what a `timestamp`, `sensor_type`, and `values` mean in the domain model.
+
+This violates the **Single Responsibility Principle**. It also forces the HDF5 reader to import from the Domain layer (`sensor_record.py`), which is an outward-to-inward dependency — a direct violation of the **Dependency Rule**.
+
+With the four-stage design, every future dataset follows the identical pattern:
+
+| Dataset | File Reader | Raw Frame | Mapper | Domain Output |
+|:---|:---|:---|:---|:---|
+| RoNIN | `RoninHDF5Reader` | `RoninRawFrame` | `RoninCanonicalMapper` | `SensorRecord` |
+| TLIO | `TlioHDF5Reader` | `TlioRawFrame` | `TlioCanonicalMapper` | `SensorRecord` |
+| EuRoC | `EurocCsvReader` | `EurocRawFrame` | `EurocCanonicalMapper` | `SensorRecord` |
+| KITTI | `KittiOxtsReader` | `KittiRawFrame` | `KittiCanonicalMapper` | `SensorRecord` |
+
+The Application layer and Domain **always receive `SensorRecord`** — regardless of which dataset is in use.
+
 ### Component Responsibility Boundaries
 
-**RoninAdapter** (`adapter.py`):
-- Discovers split directories by scanning the filesystem (no filenames hardcoded).
-- Discovers valid recordings (presence of `data.hdf5` + `info.json` only).
-- Returns `Recording` objects (paths only; no file content).
-- Does **not** open any file.
+**RoninAdapter** (`adapter.py`) — M1.2:
+- Discovers split directories by scanning the filesystem.
+- Returns `Recording` path objects. Opens **no file**.
 
-**RoninMetadataLoader** (`metadata_loader.py`):
-- Accepts a `Recording` and opens **only** `recording.info_path`.
-- Parses and validates all required JSON fields against the real schema.
-- Raises `DatasetError` with precise context on any failure.
-- Returns an immutable `RoninRecordingMetadata` value object.
+**RoninMetadataLoader** (`metadata_loader.py`) — M1.3:
+- Accepts a `Recording`. Opens **only** `recording.info_path`.
+- Returns an immutable `RoninRecordingMetadata`.
 - Does **not** open `data.hdf5`.
 
-**HDF5 Reader** (future, M1.4):
-- Will accept a `Recording` and open **only** `recording.hdf5_path`.
-- Will decode raw sensor arrays (gyro, acce, etc.) from the HDF5 groups.
-- Will yield `SensorRecord` objects consumed by the Application layer.
-- Does **not** re-parse `info.json` (uses `RoninRecordingMetadata` if calibration is needed).
+**RoninHDF5Reader** (`hdf5_reader.py`) — M1.4 (next):
+- Accepts a `Recording` + `RoninRecordingMetadata`.
+- Opens **only** `recording.hdf5_path` using `h5py`.
+- Reads `synced/` group arrays; applies `start_frame` slice.
+- Returns a sequence of `RoninRawFrame` (dataset-specific frozen dataclass).
+- Does **not** import from `domain/`. Does **not** re-parse `info.json`.
+
+**RoninCanonicalMapper** (`canonical_mapper.py`) — M1.5:
+- Accepts `RoninRawFrame` objects.
+- Returns `SensorRecord` domain objects.
+- Is the **only** component that imports both adapter types and domain types.
+- Contains all RoNIN-to-domain field name translation logic.
+- Is pure (stateless, no I/O).
 
 ### Why the Domain Layer Never Imports Dataset-Specific Code
 
-The Domain layer (where Kalman filters, kinematics, and state models live) must remain completely ignorant of data sources. If the Domain layer imported an HDF5 parsing routine or referenced a RoNIN-specific field name, it would become tightly coupled to one dataset's format — a direct violation of the Dependency Rule.
+The Domain layer (where Kalman filters, kinematics, and state models live) must remain completely ignorant of data sources. The `SensorRecord` type it receives carries only canonical field names. Any dataset can feed the Domain by implementing its own Reader + Mapper pair — zero changes to core algorithms.
 
-The Domain only ever receives abstract `SensorRecord` values, ensuring that swapping one dataset for another requires only a change of adapter — zero changes to core algorithms.
+See [ADR-0002](adr/0002-hdf5-reader-canonical-mapper-separation.md) for the full decision record.
