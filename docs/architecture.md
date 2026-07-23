@@ -152,16 +152,16 @@ The Application layer requests a dataset by name from the registry (`registry.ge
 | `adapter.py` | Implements `DatasetInterface`. Resolves paths from `configs/dataset.yaml`. Discovers splits and recordings dynamically from the filesystem. Delegates all validation to `RoninValidator`. |
 | `__init__.py` | Exports the public API of the subpackage. Triggers auto-registration in the global registry. |
 
-### Separation of Concerns: Four Independent Components
+### Separation of Concerns: Five Independent Components
 
-The RoNIN dataset pipeline is split into four strictly independent components. Each component has exactly one responsibility and zero knowledge of its neighbours' internals.
+The RoNIN dataset pipeline is split into five strictly independent components. Each component has exactly one responsibility and zero knowledge of its neighbours' internals.
 
 | Concern | Component | Module | Status |
 |:---|:---|:---|:---:|
 | **Dataset Discovery** — find splits and recording dirs | `RoninAdapter` | `adapter.py` | ✅ Done (M1.2) |
 | **Metadata Parsing** — read and validate `info.json` | `RoninMetadataLoader` | `metadata_loader.py` | ✅ Done (M1.3) |
-| **Sensor Decoding** — read raw arrays from `data.hdf5`, return dataset-specific frame | `RoninHDF5Reader` | `hdf5_reader.py` | 🔜 M1.4 |
-| **Canonical Mapping** — convert dataset-specific frame to domain `SensorRecord` | `RoninCanonicalMapper` | `canonical_mapper.py` | 🔜 M1.5 |
+| **Sensor Decoding** — read raw arrays from `data.hdf5` → `RoninRawFrame` | `RoninHDF5Reader` | `hdf5_reader.py` | ✅ Done (M1.4) |
+| **Canonical Mapping** — `RoninRawFrame` → domain `SensorRecord` | `RoninCanonicalMapper` | `canonical_mapper.py` | ✅ Done (M1.5) |
 | **Dataset Utilities** — iteration helpers, split loaders, batching | Utilities | `utils.py` | 🔜 M1.6 |
 | **EDA** — visualisation, statistics, distribution analysis | Notebooks / scripts | `reports/eda/` | 🔜 M1.7 |
 

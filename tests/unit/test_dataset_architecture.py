@@ -15,17 +15,19 @@ def test_dataset_interface_cannot_be_instantiated():
 
 def test_sensor_record_dataclass():
     record = SensorRecord(
-        timestamp=12345.67,
-        sensor_type="imu",
-        values=[0.1, 0.2, 0.3],
         frame_id=1,
-        metadata={"unit": "m/s^2"},
+        timestamp=12345.67,
+        accelerometer=(0.1, 0.2, 9.8),
+        gyroscope=(0.01, 0.02, 0.03),
+        linear_acceleration=(0.1, 0.2, 0.1),
+        gravity=(0.0, 0.0, 9.81),
+        orientation=(0.0, 0.0, 0.0, 1.0),
+        magnetometer=(10.0, 20.0, 30.0),
     )
     assert record.timestamp == 12345.67
-    assert record.sensor_type == "imu"
-    assert record.values == [0.1, 0.2, 0.3]
     assert record.frame_id == 1
-    assert record.metadata["unit"] == "m/s^2"
+    assert len(record.accelerometer) == 3
+    assert len(record.orientation) == 4
 
 
 def test_dataset_metadata_dataclass():

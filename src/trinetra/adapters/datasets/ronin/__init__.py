@@ -23,6 +23,7 @@ Example::
 """
 
 from .adapter import RoninAdapter
+from .canonical_mapper import RoninCanonicalMapper
 from .hdf5_reader import RoninHDF5Reader
 from .metadata_loader import RoninMetadataLoader
 from .metadata_models import (
@@ -49,6 +50,7 @@ __all__ = [
     "Recording",
     "RecordingValidationResult",
     "RoninAdapter",
+    "RoninCanonicalMapper",
     "RoninHDF5Reader",
     "RoninMetadataLoader",
     "RoninRawFrame",
