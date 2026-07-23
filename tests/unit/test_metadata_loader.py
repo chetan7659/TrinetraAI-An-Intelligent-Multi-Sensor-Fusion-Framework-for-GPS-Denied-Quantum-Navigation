@@ -292,7 +292,7 @@ class TestMissingFile:
         self, loader: RoninMetadataLoader, tmp_path: Path
     ) -> None:
         recording = _make_recording(tmp_path, write_file=False)
-        with pytest.raises(DatasetError, match="info.json not found"):
+        with pytest.raises(DatasetError, match=r"info\.json not found"):
             loader.load(recording)
 
     def test_error_message_contains_recording_id(

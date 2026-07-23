@@ -242,11 +242,11 @@ The Application layer and Domain **always receive `SensorRecord`** — regardles
 - Returns an immutable `RoninRecordingMetadata`.
 - Does **not** open `data.hdf5`.
 
-**RoninHDF5Reader** (`hdf5_reader.py`) — M1.4 (next):
+**RoninHDF5Reader** (`hdf5_reader.py`) — M1.4:
 - Accepts a `Recording` + `RoninRecordingMetadata`.
 - Opens **only** `recording.hdf5_path` using `h5py`.
 - Reads `synced/` group arrays; applies `start_frame` slice.
-- Returns a sequence of `RoninRawFrame` (dataset-specific frozen dataclass).
+- Returns a lazy iterator of `RoninRawFrame` (dataset-specific frozen dataclass).
 - Does **not** import from `domain/`. Does **not** re-parse `info.json`.
 
 **RoninCanonicalMapper** (`canonical_mapper.py`) — M1.5:
@@ -261,3 +261,88 @@ The Application layer and Domain **always receive `SensorRecord`** — regardles
 The Domain layer (where Kalman filters, kinematics, and state models live) must remain completely ignorant of data sources. The `SensorRecord` type it receives carries only canonical field names. Any dataset can feed the Domain by implementing its own Reader + Mapper pair — zero changes to core algorithms.
 
 See [ADR-0002](adr/0002-hdf5-reader-canonical-mapper-separation.md) for the full decision record.
+
+---
+
+## Application Layer
+
+```
+src/trinetra/application/
+└── dataset/
+    ├── __init__.py
+    └── recording_iterator.py   ← M1.6.1
+```
+
+### Purpose
+
+The Application layer **orchestrates** adapter and domain components.
+It holds no business logic and performs no parsing, decoding, or mapping itself.
+Its sole responsibility is to sequence collaborator calls and expose a clean,
+dataset-agnostic API to higher layers (e.g., training loops, EDA notebooks).
+
+### RecordingIterator — M1.6.1
+
+**Location**: `src/trinetra/application/dataset/recording_iterator.py`
+
+**Responsibility**: Orchestrate one recording's ingestion pipeline and produce
+a lazy `Iterator[SensorRecord]` for the caller.
+
+**What it does**:
+1. Calls `MetadataLoader.load(recording)` — once, before iteration begins.
+2. Calls `HDF5Reader.read(recording, metadata)` — returns a lazy raw-frame iterator.
+3. Calls `CanonicalMapper.map_frames(raw_frames)` — wraps raw frames in a mapping generator.
+4. `yield from` the mapped iterator — one `SensorRecord` per time step.
+
+**What it does NOT do**:
+- Open files (no `h5py`, no `open()`)
+- Parse JSON or YAML
+- Traverse the filesystem
+- Perform unit conversion, calibration, or normalisation
+- Filter, batch, or window frames
+
+**Dependency Injection**: All three collaborators are injected through the
+constructor. `RecordingIterator` never instantiates collaborators internally.
+This design makes the service testable with lightweight stubs and decoupled
+from any specific dataset implementation.
+
+**Collaborator protocols**:
+
+```python
+class MetadataLoaderProtocol(Protocol):
+    def load(self, recording: Any) -> Any: ...
+
+class RawFrameReaderProtocol(Protocol):
+    def read(self, recording: Any, metadata: Any) -> Iterator[Any]: ...
+
+class CanonicalMapperProtocol(Protocol):
+    def map_frames(self, frames: Iterable[Any]) -> Iterator[SensorRecord]: ...
+```
+
+Any class that satisfies the structural interface (duck-typing) can be injected —
+not only the RoNIN-specific implementations.
+
+**Example usage**:
+
+```python
+from trinetra.adapters.datasets.ronin import (
+    RoninAdapter, RoninMetadataLoader,
+    RoninHDF5Reader, RoninCanonicalMapper,
+)
+from trinetra.application.dataset.recording_iterator import RecordingIterator
+
+adapter   = RoninAdapter()
+recording = adapter.get_recording("a000_1")
+
+iterator  = RecordingIterator(
+    metadata_loader=RoninMetadataLoader(),
+    hdf5_reader=RoninHDF5Reader(),
+    canonical_mapper=RoninCanonicalMapper(),
+)
+
+for record in iterator.iter_recording(recording):
+    print(record.timestamp, record.accelerometer)
+```
+
+**Extensibility**: When a second dataset (e.g., TLIO) is added, the caller
+simply injects `TlioMetadataLoader`, `TlioHDF5Reader`, and `TlioCanonicalMapper`.
+The `RecordingIterator` class itself requires **zero changes**.
